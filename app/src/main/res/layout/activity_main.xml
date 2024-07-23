@@ -3,15 +3,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:gravity="center"
+    android:gravity="center_horizontal"
     android:padding="16dp"
     tools:context=".MainActivity">
 
     <ImageView
         android:id="@+id/logoImageView"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        android:layout_gravity="bottom"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_gravity="left"
         android:contentDescription="@string/logo"
         android:src="@drawable/img" />
 
@@ -19,22 +19,24 @@
         android:id="@+id/welcomeTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginTop="16dp"
-        android:fontFamily="@font/actor"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="24dp"
+        android:fontFamily="@font/onest_font_family"
         android:text="@string/welcome_message"
-        android:textSize="24sp"
+        android:textColor="@color/black"
+        android:textSize="32sp"
         android:textStyle="bold" />
 
     <TextView
         android:id="@+id/instructionTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
+        android:layout_gravity="center_horizontal"
         android:layout_marginTop="8dp"
-        android:fontFamily="@font/actor"
+        android:textStyle="bold"
+        android:fontFamily="@font/onest_font_family"
         android:text="@string/instruction_message"
-        android:textSize="16sp" />
+        android:textSize="14sp" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -58,9 +60,10 @@
             android:layout_gravity="center_vertical"
             android:layout_weight="1"
             android:background="@android:color/transparent"
-            android:fontFamily="@font/actor"
+            android:fontFamily="@font/onest_font_family"
             android:hint="@string/phone_number_hint"
             android:inputType="phone"
+            android:textSize="14sp"
             android:paddingStart="8dp"
             android:paddingEnd="8dp" />
     </LinearLayout>
@@ -69,11 +72,12 @@
         android:id="@+id/continueButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:background="@drawable/rounded_button"
+        android:fontFamily="@font/onest_font_family"
+        android:padding="16dp"
         android:text="@string/contin"
-        android:layout_marginTop="16dp"
-        android:backgroundTint="@color/blue"
-        android:textColor="@android:color/white"
+        android:textColor="#FFFFFF"
         android:textSize="16sp"
-        android:padding="12dp"
-        android:fontFamily="@font/Onest-VariableFont_wght" />
+        android:textStyle="bold" />
 </LinearLayout>

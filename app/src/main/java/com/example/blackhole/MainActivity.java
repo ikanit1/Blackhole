@@ -23,12 +23,28 @@ public class MainActivity extends AppCompatActivity {
         phoneNumberEditText = findViewById(R.id.phoneNumberEditText);
         continueButton = findViewById(R.id.continueButton);
 
+        String[] countryCodes = getResources().getStringArray(R.array.country_codes);
+
+        int[] flags = {
+                R.drawable.flag_us,
+                R.drawable.flag_ru,
+                R.drawable.flag_fr,
+                R.drawable.flag_de,
+                R.drawable.flag_jp,
+                R.drawable.flag_in,
+                R.drawable.flag_uk,
+                R.drawable.flag_kz // Kazakhstan
+        };
+
+        CountryAdapter adapter = new CountryAdapter(this, countryCodes, flags);
+        countryCodeSpinner.setAdapter(adapter);
+
         continueButton.setOnClickListener(v -> {
             String countryCode = countryCodeSpinner.getSelectedItem().toString();
             String phoneNumber = phoneNumberEditText.getText().toString().trim();
 
             if (phoneNumber.isEmpty()) {
-                Toast.makeText(MainActivity.this, "Введите номер телефонаjouiop", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "Введите номер телефона", Toast.LENGTH_SHORT).show();
             } else {
                 // Handle the phone number submission
                 Toast.makeText(MainActivity.this, "Phone Number: " + countryCode + phoneNumber, Toast.LENGTH_SHORT).show();
