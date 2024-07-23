@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Blackhole</string>
+    <string name="welcome_message">Добро пожаловать в blackhole.</string>
+    <string name="instruction_message">Для продолжения работы, введите номер телефона</string>
+    <string name="phone_number_hint">700 000 00 00</string>
+    <string name="contin">Продолжить</string>
+    <string name="logo">Logo</string>
+</resources>
