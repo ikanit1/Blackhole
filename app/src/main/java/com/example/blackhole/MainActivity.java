@@ -1,5 +1,6 @@
 package com.example.blackhole;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
@@ -48,6 +49,11 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 // Handle the phone number submission
                 Toast.makeText(MainActivity.this, "Phone Number: " + countryCode + phoneNumber, Toast.LENGTH_SHORT).show();
+
+                // Intent to start AppSelectionActivity
+                Intent intent = new Intent(MainActivity.this, AppSelectionActivity.class);
+                intent.putExtra("PHONE_NUMBER", countryCode + phoneNumber);
+                startActivity(intent);
             }
         });
     }

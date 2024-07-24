@@ -22,9 +22,15 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".AppSelectionActivity"
+            android:exported="true">
+            <!-- Intent filter if you want to launch this activity from a specific intent -->
+        </activity>
+
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Add other permissions as needed -->
-
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
 </manifest>
