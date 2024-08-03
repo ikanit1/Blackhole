@@ -71,7 +71,16 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.AppViewHolder> {
                     checkIcon.setVisibility(View.VISIBLE);
                     appIcon.setColorFilter(Color.parseColor("#80000000")); // semi-transparent black
                 }
+                viewModel.toggleAppSelection(appInfo);
             });
+
+            if (viewModel.isSelected(appInfo)) {
+                checkIcon.setVisibility(View.VISIBLE);
+                appIcon.setColorFilter(Color.parseColor("#80000000"));
+            } else {
+                checkIcon.setVisibility(View.GONE);
+                appIcon.setColorFilter(null);
+            }
         }
     }
 }

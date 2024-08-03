@@ -46,4 +46,8 @@ public class AppSelectionViewModel extends ViewModel {
     public boolean isSelected(AppInfo appInfo) {
         return selectedApps.contains(appInfo);
     }
+
+    public ArrayList<AppInfo> getSelectedApps() {
+        return new ArrayList<>(selectedApps);
+    }
 }

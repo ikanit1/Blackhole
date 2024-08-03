@@ -27,6 +27,11 @@
             <!-- Intent filter if you want to launch this activity from a specific intent -->
         </activity>
 
+        <!-- Добавляем AppInputsActivity в манифест -->
+        <activity android:name=".AppInputsActivity"
+            android:exported="true">
+        </activity>
+
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />
