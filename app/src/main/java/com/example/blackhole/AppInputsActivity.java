@@ -1,6 +1,9 @@
 package com.example.blackhole;
 
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
@@ -14,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class AppInputsActivity extends AppCompatActivity {
 
@@ -23,7 +27,7 @@ public class AppInputsActivity extends AppCompatActivity {
     private BottomNavigationView bottomNavigationView;
     private TextView editLink;
 
-    private ArrayList<AppInfo> selectedApps;
+    private List<String> selectedAppPackageNames;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,9 +40,9 @@ public class AppInputsActivity extends AppCompatActivity {
         bottomNavigationView = findViewById(R.id.bottom_navigation);
         editLink = findViewById(R.id.edit_link);
 
-        selectedApps = getIntent().getParcelableArrayListExtra("SELECTED_APPS");
-        if (selectedApps != null) {
-            displaySelectedApps(selectedApps);
+        selectedAppPackageNames = getIntent().getStringArrayListExtra("SELECTED_APPS");
+        if (selectedAppPackageNames != null) {
+            displaySelectedApps(selectedAppPackageNames);
         }
 
         saveButton.setOnClickListener(v -> {
@@ -53,20 +57,27 @@ public class AppInputsActivity extends AppCompatActivity {
 
         editLink.setOnClickListener(v -> {
             Intent intent = new Intent(this, AppSelectionActivity.class);
-            intent.putParcelableArrayListExtra("SELECTED_APPS", selectedApps);
+            intent.putStringArrayListExtra("SELECTED_APPS", new ArrayList<>(selectedAppPackageNames));
             startActivityForResult(intent, 1);
         });
     }
 
-    private void displaySelectedApps(ArrayList<AppInfo> selectedApps) {
+    private void displaySelectedApps(List<String> selectedAppPackageNames) {
         selectedAppsContainer.removeAllViews();
-        for (AppInfo app : selectedApps) {
-            ImageView appIcon = new ImageView(this);
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(100, 100);
-            params.setMargins(8, 8, 8, 8);
-            appIcon.setLayoutParams(params);
-            appIcon.setImageDrawable(app.getIcon());
-            selectedAppsContainer.addView(appIcon);
+        PackageManager pm = getPackageManager();
+        for (String packageName : selectedAppPackageNames) {
+            try {
+                ApplicationInfo appInfo = pm.getApplicationInfo(packageName, 0);
+                Drawable appIcon = pm.getApplicationIcon(appInfo);
+                ImageView appIconView = new ImageView(this);
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(100, 100);
+                params.setMargins(8, 8, 8, 8);
+                appIconView.setLayoutParams(params);
+                appIconView.setImageDrawable(appIcon);
+                selectedAppsContainer.addView(appIconView);
+            } catch (PackageManager.NameNotFoundException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -74,9 +85,9 @@ public class AppInputsActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 1 && resultCode == RESULT_OK) {
-            selectedApps = data.getParcelableArrayListExtra("SELECTED_APPS");
-            if (selectedApps != null) {
-                displaySelectedApps(selectedApps);
+            selectedAppPackageNames = data.getStringArrayListExtra("SELECTED_APPS");
+            if (selectedAppPackageNames != null) {
+                displaySelectedApps(selectedAppPackageNames);
             }
         }
     }

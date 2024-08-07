@@ -1,19 +1,18 @@
 package com.example.blackhole;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class AppDataHolder {
-    private static final AppDataHolder INSTANCE = new AppDataHolder();
-
+    private static AppDataHolder instance;
     private List<AppInfo> selectedApps;
 
-    private AppDataHolder() {
-        selectedApps = new ArrayList<>();
-    }
+    private AppDataHolder() {}
 
-    public static AppDataHolder getInstance() {
-        return INSTANCE;
+    public static synchronized AppDataHolder getInstance() {
+        if (instance == null) {
+            instance = new AppDataHolder();
+        }
+        return instance;
     }
 
     public List<AppInfo> getSelectedApps() {

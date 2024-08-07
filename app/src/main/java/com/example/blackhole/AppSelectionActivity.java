@@ -2,7 +2,9 @@ package com.example.blackhole;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -19,6 +21,7 @@ public class AppSelectionActivity extends AppCompatActivity {
 
     private AppSelectionViewModel viewModel;
     private AppAdapter appAdapter;
+    private ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,24 +32,33 @@ public class AppSelectionActivity extends AppCompatActivity {
         RecyclerView recyclerView = findViewById(R.id.recycler_view);
         Button saveButton = findViewById(R.id.save_button);
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_navigation);
+        progressBar = findViewById(R.id.progress_bar);
 
         appAdapter = new AppAdapter(new ArrayList<>(), viewModel);
         recyclerView.setLayoutManager(new GridLayoutManager(this, 4)); // 4 columns in the grid
         recyclerView.setAdapter(appAdapter);
 
-        viewModel.getInstalledApps().observe(this, appInfos -> appAdapter.updateData(appInfos));
+        progressBar.setVisibility(View.VISIBLE); // Показать ProgressBar при старте загрузки
+
+        viewModel.getInstalledApps().observe(this, appInfos -> {
+            appAdapter.updateData(appInfos);
+            progressBar.setVisibility(View.GONE); // Скрыть ProgressBar после загрузки данных
+        });
         viewModel.loadInstalledApps(getPackageManager());
 
         String phoneNumber = getIntent().getStringExtra("PHONE_NUMBER");
         Toast.makeText(this, "Phone Number: " + phoneNumber, Toast.LENGTH_SHORT).show();
 
         saveButton.setOnClickListener(v -> {
-                List<AppInfo> selectedApps = viewModel.getSelectedApps(); // предположим, что у вас есть метод для получения выбранных приложений
-            AppDataHolder.getInstance().setSelectedApps(selectedApps);
+            List<AppInfo> selectedApps = viewModel.getSelectedApps();
+            ArrayList<String> selectedAppPackageNames = new ArrayList<>();
+            for (AppInfo app : selectedApps) {
+                selectedAppPackageNames.add(app.getPackageName());
+            }
 
             Intent intent = new Intent(AppSelectionActivity.this, AppInputsActivity.class);
+            intent.putStringArrayListExtra("SELECTED_APPS", selectedAppPackageNames);
             startActivity(intent);
         });
-
     }
 }
