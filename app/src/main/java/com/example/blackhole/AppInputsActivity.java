@@ -3,8 +3,10 @@ package com.example.blackhole;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -12,7 +14,9 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.res.ResourcesCompat;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -52,7 +56,7 @@ public class AppInputsActivity extends AppCompatActivity {
                 return;
             }
             // Handle saving logic here
-            Toast.makeText(this, "Сохранено", Toast.LENGTH_SHORT).show();
+            showSuccessDialog();
         });
 
         editLink.setOnClickListener(v -> {
@@ -80,6 +84,23 @@ public class AppInputsActivity extends AppCompatActivity {
             }
         }
     }
+
+    private void showSuccessDialog() {
+        // Inflate the custom dialog layout
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_success, null);
+
+        // Find the TextView and apply the custom font
+        TextView messageTextView = dialogView.findViewById(R.id.success_message);
+        Typeface typeface = ResourcesCompat.getFont(this, R.font.onest_font_family);
+        messageTextView.setTypeface(typeface);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setView(dialogView)
+                .setPositiveButton("OK", (dialog, which) -> dialog.dismiss())
+                .create()
+                .show();
+    }
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
