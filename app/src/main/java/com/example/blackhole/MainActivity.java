@@ -34,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
                 R.drawable.flag_jp,
                 R.drawable.flag_in,
                 R.drawable.flag_uk,
-                R.drawable.flag_kz // Kazakhstan
+                R.drawable.flag_kz
         };
 
         CountryAdapter adapter = new CountryAdapter(this, countryCodes, flags);
@@ -48,7 +48,6 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(MainActivity.this, "Введите номер телефона", Toast.LENGTH_SHORT).show();
             } else {
                 // Handle the phone number submission
-                Toast.makeText(MainActivity.this, "Phone Number: " + countryCode + phoneNumber, Toast.LENGTH_SHORT).show();
 
                 // Intent to start AppSelectionActivity
                 Intent intent = new Intent(MainActivity.this, AppSelectionActivity.class);

@@ -64,6 +64,30 @@ public class AppInputsActivity extends AppCompatActivity {
             intent.putStringArrayListExtra("SELECTED_APPS", new ArrayList<>(selectedAppPackageNames));
             startActivityForResult(intent, 1);
         });
+
+        // Set up BottomNavigationView
+        bottomNavigationView.setOnNavigationItemSelectedListener(item -> {
+            int itemId = item.getItemId();
+
+            if (itemId == R.id.navigation_push) {
+                startActivity(new Intent(AppInputsActivity.this, AppSelectionActivity.class));
+                return true;
+            } else if (itemId == R.id.navigation_sms) {
+                startActivity(new Intent(AppInputsActivity.this, RecipientSms.class));
+                return true;
+            } else if (itemId == R.id.navigation_dlq) {
+                startActivity(new Intent(AppInputsActivity.this, DLQActivity.class));
+                return true;
+            } else if (itemId == R.id.navigation_journal) {
+                startActivity(new Intent(AppInputsActivity.this, JournalActivity.class));
+                return true;
+            } else if (itemId == R.id.navigation_options) {
+                startActivity(new Intent(AppInputsActivity.this, OptionsActivity.class));
+                return true;
+            } else {
+                return false;
+            }
+        });
     }
 
     private void displaySelectedApps(List<String> selectedAppPackageNames) {
@@ -100,7 +124,6 @@ public class AppInputsActivity extends AppCompatActivity {
                 .create()
                 .show();
     }
-
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {

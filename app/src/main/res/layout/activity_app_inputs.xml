@@ -92,7 +92,6 @@
             android:text="Сохранить"
             android:textColor="@android:color/white" />
     </RelativeLayout>
-
     <!-- Bottom Navigation -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_navigation"

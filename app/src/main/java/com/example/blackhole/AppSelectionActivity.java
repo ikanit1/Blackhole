@@ -40,9 +40,9 @@ public class AppSelectionActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new GridLayoutManager(this, 4)); // 4 columns in the grid
         recyclerView.setAdapter(appAdapter);
 
-        progressBar.setVisibility(View.VISIBLE); // Показать ProgressBar при старте загрузки
+        progressBar.setVisibility(View.VISIBLE); // Show ProgressBar at start of loading
 
-        // Анимация ProgressBar
+        // ProgressBar Animation
         ObjectAnimator animator = ObjectAnimator.ofFloat(progressBar, "rotation", 0f, 360f);
         animator.setDuration(1000);
         animator.setInterpolator(new LinearInterpolator());
@@ -51,7 +51,7 @@ public class AppSelectionActivity extends AppCompatActivity {
 
         viewModel.getInstalledApps().observe(this, appInfos -> {
             appAdapter.updateData(appInfos);
-            progressBar.setVisibility(View.GONE); // Скрыть ProgressBar после загрузки данных
+            progressBar.setVisibility(View.GONE); // Hide ProgressBar after loading data
             animator.cancel();
         });
 
@@ -70,6 +70,29 @@ public class AppSelectionActivity extends AppCompatActivity {
             Intent intent = new Intent(AppSelectionActivity.this, AppInputsActivity.class);
             intent.putStringArrayListExtra("SELECTED_APPS", selectedAppPackageNames);
             startActivity(intent);
+        });
+
+        bottomNavigationView.setOnNavigationItemSelectedListener(item -> {
+            int itemId = item.getItemId();
+
+            if (itemId == R.id.navigation_push) {
+                startActivity(new Intent(AppSelectionActivity.this, AppSelectionActivity.class));
+                return true;
+            } else if (itemId == R.id.navigation_sms) {
+                startActivity(new Intent(AppSelectionActivity.this, RecipientSms.class));
+                return true;
+            } else if (itemId == R.id.navigation_dlq) {
+                startActivity(new Intent(AppSelectionActivity.this, DLQActivity.class));
+                return true;
+            } else if (itemId == R.id.navigation_journal) {
+                startActivity(new Intent(AppSelectionActivity.this, JournalActivity.class));
+                return true;
+            } else if (itemId == R.id.navigation_options) {
+                startActivity(new Intent(AppSelectionActivity.this, OptionsActivity.class));
+                return true;
+            } else {
+                return false;
+            }
         });
     }
 }
