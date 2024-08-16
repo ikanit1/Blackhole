@@ -1,6 +1,8 @@
 package com.example.blackhole;
 
 import android.content.Context;
+import android.content.Intent;
+import android.os.Parcelable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,14 +11,18 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import java.util.ArrayList;
 import java.util.List;
 
 public class RecipientAdapter extends RecyclerView.Adapter<RecipientAdapter.RecipientViewHolder> {
 
     private final List<Recipient> recipients;
     private final LayoutInflater inflater;
+    private final List<Recipient> selectedRecipients = new ArrayList<>();
+    private final Context context;
 
     public RecipientAdapter(Context context, List<Recipient> recipients) {
+        this.context = context;
         this.recipients = recipients;
         this.inflater = LayoutInflater.from(context);
     }
@@ -35,7 +41,21 @@ public class RecipientAdapter extends RecyclerView.Adapter<RecipientAdapter.Reci
         holder.messagePreviewTextView.setText(recipient.getMessagePreview());
         holder.avatarImageView.setImageResource(recipient.getAvatarResId());
         holder.selectCheckBox.setChecked(recipient.isSelected());
-        holder.selectCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> recipient.setSelected(isChecked));
+        holder.selectCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            recipient.setSelected(isChecked);
+            if (isChecked) {
+                selectedRecipients.add(recipient);
+            } else {
+                selectedRecipients.remove(recipient);
+            }
+        });
+
+        // Optional: Start SelectedContactsActivity when an item is clicked
+        holder.itemView.setOnClickListener(v -> {
+            Intent intent = new Intent(context, SelectedContactsActivity.class);
+            intent.putParcelableArrayListExtra("selected_recipients", (ArrayList<? extends Parcelable>) new ArrayList<>(selectedRecipients));
+            context.startActivity(intent);
+        });
     }
 
     @Override

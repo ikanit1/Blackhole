@@ -57,14 +57,33 @@ public class RecipientSms extends AppCompatActivity {
         });
 
         saveButton.setOnClickListener(v -> {
-            List<Recipient> selectedRecipients = new ArrayList<>();
+            ArrayList<Recipient> selectedRecipients = new ArrayList<>();
             for (Recipient recipient : recipients) {
                 if (recipient.isSelected()) {
                     selectedRecipients.add(recipient);
                 }
             }
-            // Сохранение selectedRecipients или другие действия с ними
+
+            if (!selectedRecipients.isEmpty()) {
+                Intent intent = new Intent(RecipientSms.this, SelectedContactsActivity.class);
+                intent.putParcelableArrayListExtra("selected_recipients", selectedRecipients);
+                startActivity(intent);
+            } else {
+                Toast.makeText(this, "No recipients selected", Toast.LENGTH_SHORT).show();
+            }
         });
+
+        // Handle previously selected recipients
+        ArrayList<Recipient> previouslySelectedRecipients = getIntent().getParcelableArrayListExtra("selected_recipients");
+        if (previouslySelectedRecipients != null && !previouslySelectedRecipients.isEmpty()) {
+            for (Recipient recipient : recipients) {
+                for (Recipient selected : previouslySelectedRecipients) {
+                    if (recipient.getName().equals(selected.getName())) {
+                        recipient.setSelected(true);
+                    }
+                }
+            }
+        }
 
         bottomNavigationView.setOnNavigationItemSelectedListener(item -> {
             int itemId = item.getItemId();
@@ -108,6 +127,18 @@ public class RecipientSms extends AppCompatActivity {
                 }
             }
             smsCursor.close();
+
+            // Handle previously selected recipients (if any)
+            ArrayList<Recipient> previouslySelectedRecipients = getIntent().getParcelableArrayListExtra("selected_recipients");
+            if (previouslySelectedRecipients != null) {
+                for (Recipient recipient : recipients) {
+                    for (Recipient selected : previouslySelectedRecipients) {
+                        if (recipient.getName().equals(selected.getName())) {
+                            recipient.setSelected(true);
+                        }
+                    }
+                }
+            }
 
             recipientAdapter = new RecipientAdapter(this, recipients);
         }

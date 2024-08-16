@@ -38,15 +38,15 @@
             <EditText
                 android:id="@+id/phoneNumberEditText"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="31dp"
                 android:layout_weight="1"
                 android:background="@android:color/transparent"
                 android:fontFamily="@font/onest_font_family"
                 android:hint="@string/phone_number_hint"
                 android:inputType="phone"
-                android:textSize="14sp"
                 android:paddingStart="8dp"
-                android:paddingEnd="8dp" />
+                android:paddingEnd="8dp"
+                android:textSize="14sp" />
         </LinearLayout>
 
         <Button
