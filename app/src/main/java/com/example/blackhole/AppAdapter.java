@@ -59,15 +59,13 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.AppViewHolder> {
         }
 
         public void bind(AppInfo appInfo, AppSelectionViewModel viewModel) {
-            appIcon.setImageDrawable(appInfo.getIcon());
+            appIcon.setImageDrawable(appInfo.getAppIcon());
 
             itemView.setOnClickListener(v -> {
-                if (selectedApps.contains(appInfo)) {
-                    selectedApps.remove(appInfo);
+                if (viewModel.isSelected(appInfo)) {
                     checkIcon.setVisibility(View.GONE);
                     appIcon.setColorFilter(null);
                 } else {
-                    selectedApps.add(appInfo);
                     checkIcon.setVisibility(View.VISIBLE);
                     appIcon.setColorFilter(Color.parseColor("#80000000")); // semi-transparent black
                 }

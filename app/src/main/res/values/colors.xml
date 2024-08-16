@@ -10,4 +10,6 @@
     <color name="blue"> #2F66F3</color>
     <color name="bluee"> #2F66F2</color>
     <color name="grey"> #BCBCBC</color>
+    <color name="red">#FF1100</color>
+    <color name="green">#A936FD1F</color>
 </resources>

@@ -54,24 +54,30 @@
             android:textSize="14sp"
             android:textStyle="bold" />
 
-        <!-- Selected contacts container -->
-        <LinearLayout
-            android:id="@+id/selected_contacts_container"
+        <!-- Horizontal Scroll View for selected contacts -->
+        <HorizontalScrollView
+            android:id="@+id/horizontal_scroll_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/subtitle"
-            android:layout_marginTop="8dp"
-            android:orientation="vertical"
-            android:padding="8dp">
-            <!-- This container will be dynamically populated with TextViews in the activity -->
-        </LinearLayout>
+            android:layout_marginTop="8dp">
+
+            <LinearLayout
+                android:id="@+id/selected_contacts_container"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="8dp">
+                <!-- This container will be dynamically populated with TextViews in the activity -->
+            </LinearLayout>
+        </HorizontalScrollView>
 
         <!-- IP Address input -->
         <EditText
             android:id="@+id/ip_address"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/selected_contacts_container"
+            android:layout_below="@id/horizontal_scroll_view"
             android:layout_marginTop="16dp"
             android:background="@drawable/edit_text_background"
             android:hint="IP сервера *"

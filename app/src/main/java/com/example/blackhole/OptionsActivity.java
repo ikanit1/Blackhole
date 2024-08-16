@@ -9,6 +9,8 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -17,6 +19,7 @@ public class OptionsActivity extends AppCompatActivity {
     private Spinner countryCodeSpinner;
     private EditText phoneNumberEditText;
     private Button saveButton;
+    private BottomNavigationView bottomNavigationView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,8 +29,9 @@ public class OptionsActivity extends AppCompatActivity {
         countryCodeSpinner = findViewById(R.id.countryCodeSpinner);
         phoneNumberEditText = findViewById(R.id.phoneNumberEditText);
         saveButton = findViewById(R.id.saveButton);
+        bottomNavigationView = findViewById(R.id.bottom_navigation);
 
-        // Здесь можно заполнить Spinner списком кодов стран и соответствующих флагов
+        // Initialize the country spinner with country codes and flags
         String[] countryCodes = getResources().getStringArray(R.array.country_codes);
         int[] flags = {
                 R.drawable.flag_us,
@@ -50,11 +54,10 @@ public class OptionsActivity extends AppCompatActivity {
             if (phoneNumber.isEmpty()) {
                 Toast.makeText(OptionsActivity.this, "Введите номер телефона", Toast.LENGTH_SHORT).show();
             } else if (isValidPhoneNumber(countryCode + phoneNumber)) {
-                // Сохранение номера телефона
+                // Save the phone number and navigate to another activity
                 Toast.makeText(OptionsActivity.this, "Номер телефона сохранен: " + countryCode + phoneNumber, Toast.LENGTH_SHORT).show();
 
-                // Intent на другую активность или логика сохранения данных
-                // Например, переход на другую активность:
+                // Example: Navigate to another activity
                 Intent intent = new Intent(OptionsActivity.this, AppSelectionActivity.class);
                 intent.putExtra("PHONE_NUMBER", countryCode + phoneNumber);
                 startActivity(intent);
@@ -62,10 +65,33 @@ public class OptionsActivity extends AppCompatActivity {
                 Toast.makeText(OptionsActivity.this, "Некорректный номер телефона", Toast.LENGTH_SHORT).show();
             }
         });
+
+        // Handle bottom navigation item selections
+        bottomNavigationView.setOnNavigationItemSelectedListener(item -> {
+            int itemId = item.getItemId();
+
+            if (itemId == R.id.navigation_push) {
+                startActivity(new Intent(OptionsActivity.this, AppSelectionActivity.class));
+                return true;
+            } else if (itemId == R.id.navigation_sms) {
+                startActivity(new Intent(OptionsActivity.this, RecipientSms.class));
+                return true;
+            } else if (itemId == R.id.navigation_dlq) {
+                startActivity(new Intent(OptionsActivity.this, DLQActivity.class));
+                return true;
+            } else if (itemId == R.id.navigation_journal) {
+                startActivity(new Intent(OptionsActivity.this, JournalActivity.class));
+                return true;
+            } else if (itemId == R.id.navigation_options) {
+                return true; // Stay on the current activity
+            } else {
+                return false;
+            }
+        });
     }
 
     private boolean isValidPhoneNumber(String phoneNumber) {
-        // Регулярное выражение для валидации номера телефона
+        // Regular expression for phone number validation
         String regex = "^\\+\\d{1,3}\\d{4,14}(?:x.+)?$";
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(phoneNumber);

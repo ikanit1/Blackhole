@@ -1,53 +1,78 @@
 package com.example.blackhole;
 
+import android.app.Application;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 
+import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class AppSelectionViewModel extends ViewModel {
+public class AppSelectionViewModel extends AndroidViewModel {
 
-    private MutableLiveData<List<AppInfo>> installedApps = new MutableLiveData<>(new ArrayList<>());
-    private List<AppInfo> selectedApps = new ArrayList<>();
+    private final AppDatabase db;
+    private final MutableLiveData<List<AppInfo>> installedApps = new MutableLiveData<>();
+    private final MutableLiveData<List<AppInfo>> selectedApps = new MutableLiveData<>(new ArrayList<>());
+
+    public AppSelectionViewModel(Application application) {
+        super(application);
+        db = AppDatabase.getDatabase(application);
+    }
 
     public LiveData<List<AppInfo>> getInstalledApps() {
         return installedApps;
     }
 
-    public void loadInstalledApps(PackageManager packageManager) {
+    public LiveData<List<AppInfo>> getSelectedApps() {
+        return selectedApps;
+    }
+
+    public void loadInstalledApps(PackageManager pm) {
         new Thread(() -> {
-            List<AppInfo> apps = new ArrayList<>();
-            List<ApplicationInfo> packages = packageManager.getInstalledApplications(PackageManager.GET_META_DATA);
-            for (ApplicationInfo packageInfo : packages) {
-                if (packageManager.getLaunchIntentForPackage(packageInfo.packageName) != null) {
-                    String name = packageManager.getApplicationLabel(packageInfo).toString();
-                    Drawable icon = packageManager.getApplicationIcon(packageInfo);
-                    apps.add(new AppInfo(name, packageInfo.packageName, icon));
+            List<ApplicationInfo> apps = pm.getInstalledApplications(PackageManager.GET_META_DATA);
+            List<AppInfo> appInfos = new ArrayList<>();
+            for (ApplicationInfo app : apps) {
+                // Исключаем системные приложения
+                if ((app.flags & ApplicationInfo.FLAG_SYSTEM) == 0) {
+                    Drawable icon = pm.getApplicationIcon(app);
+                    appInfos.add(new AppInfo(app.loadLabel(pm).toString(), app.packageName, icon));
                 }
             }
-            installedApps.postValue(apps);
+            installedApps.postValue(appInfos);
         }).start();
     }
 
     public void toggleAppSelection(AppInfo appInfo) {
-        if (selectedApps.contains(appInfo)) {
-            selectedApps.remove(appInfo);
-        } else {
-            selectedApps.add(appInfo);
+        List<AppInfo> currentSelection = selectedApps.getValue();
+        if (currentSelection != null) {
+            if (currentSelection.contains(appInfo)) {
+                currentSelection.remove(appInfo);
+            } else {
+                currentSelection.add(appInfo);
+            }
+            selectedApps.postValue(currentSelection);
         }
     }
 
     public boolean isSelected(AppInfo appInfo) {
-        return selectedApps.contains(appInfo);
+        List<AppInfo> currentSelection = selectedApps.getValue();
+        return currentSelection != null && currentSelection.contains(appInfo);
     }
 
-    public ArrayList<AppInfo> getSelectedApps() {
-        return new ArrayList<>(selectedApps);
+    public void saveSelectedApps() {
+        new Thread(() -> {
+            List<AppInfo> apps = selectedApps.getValue();
+            if (apps != null) {
+                List<SelectedApp> selectedAppEntities = new ArrayList<>();
+                for (AppInfo app : apps) {
+                    selectedAppEntities.add(new SelectedApp(app.getAppPackageName()));
+                }
+                db.selectedAppsDao().insertAll(selectedAppEntities);
+            }
+        }).start();
     }
 }

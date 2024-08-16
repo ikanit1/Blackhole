@@ -37,6 +37,17 @@
         <activity android:name=".RecipientSms" />
         <activity android:name=".SelectedContactsActivity" />
         <activity android:name=".OptionsActivity" />
+        <activity android:name=".JournalActivity" />
+
+        <service
+            android:name=".NotificationListener"
+            android:exported="true"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
 
 
     </application>

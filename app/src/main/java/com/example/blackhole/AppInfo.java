@@ -9,21 +9,21 @@ import android.os.Parcelable;
 
 public class AppInfo implements Parcelable {
 
-    private String name;
-    private String packageName;
-    private Drawable icon;
+    private String appName;
+    private String appPackageName;
+    private Drawable appIcon;
 
-    public AppInfo(String name, String packageName, Drawable icon) {
-        this.name = name;
-        this.packageName = packageName;
-        this.icon = icon;
+    public AppInfo(String appName, String appPackageName, Drawable appIcon) {
+        this.appName = appName;
+        this.appPackageName = appPackageName;
+        this.appIcon = appIcon;
     }
 
     protected AppInfo(Parcel in) {
-        name = in.readString();
-        packageName = in.readString();
+        appName = in.readString();
+        appPackageName = in.readString();
         Bitmap bitmap = in.readParcelable(Bitmap.class.getClassLoader());
-        icon = new BitmapDrawable(bitmap);
+        appIcon = new BitmapDrawable(bitmap);
     }
 
     public static final Creator<AppInfo> CREATOR = new Creator<AppInfo>() {
@@ -38,16 +38,16 @@ public class AppInfo implements Parcelable {
         }
     };
 
-    public String getName() {
-        return name;
+    public String getAppName() {
+        return appName;
     }
 
-    public String getPackageName() {
-        return packageName;
+    public String getAppPackageName() {
+        return appPackageName;
     }
 
-    public Drawable getIcon() {
-        return icon;
+    public Drawable getAppIcon() {
+        return appIcon;
     }
 
     @Override
@@ -57,9 +57,9 @@ public class AppInfo implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(name);
-        dest.writeString(packageName);
-        dest.writeParcelable(drawableToBitmap(icon), flags);
+        dest.writeString(appName);
+        dest.writeString(appPackageName);
+        dest.writeParcelable(drawableToBitmap(appIcon), flags);
     }
 
     private Bitmap drawableToBitmap(Drawable drawable) {
@@ -67,7 +67,10 @@ public class AppInfo implements Parcelable {
             return ((BitmapDrawable) drawable).getBitmap();
         }
 
-        Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        int width = drawable.getIntrinsicWidth() > 0 ? drawable.getIntrinsicWidth() : 1;
+        int height = drawable.getIntrinsicHeight() > 0 ? drawable.getIntrinsicHeight() : 1;
+
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
         drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
         drawable.draw(canvas);

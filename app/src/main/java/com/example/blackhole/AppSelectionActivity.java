@@ -61,10 +61,13 @@ public class AppSelectionActivity extends AppCompatActivity {
         Toast.makeText(this, "Phone Number: " + phoneNumber, Toast.LENGTH_SHORT).show();
 
         saveButton.setOnClickListener(v -> {
-            List<AppInfo> selectedApps = viewModel.getSelectedApps();
+            viewModel.saveSelectedApps();
+            List<AppInfo> selectedApps = viewModel.getSelectedApps().getValue();
             ArrayList<String> selectedAppPackageNames = new ArrayList<>();
-            for (AppInfo app : selectedApps) {
-                selectedAppPackageNames.add(app.getPackageName());
+            if (selectedApps != null) {
+                for (AppInfo app : selectedApps) {
+                    selectedAppPackageNames.add(app.getAppPackageName());
+                }
             }
 
             Intent intent = new Intent(AppSelectionActivity.this, AppInputsActivity.class);
