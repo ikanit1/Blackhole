@@ -6,7 +6,15 @@
     <uses-feature
         android:name="android.hardware.telephony"
         android:required="false" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_SMS" /> <!-- Add other permissions as needed -->
+    <uses-permission
+        android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
+
     <application
+        android:usesCleartextTraffic="true"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -16,24 +24,28 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar"
         tools:targetApi="31">
+        <meta-data
+            android:name="com.google.android.actions"
+            android:resource="@xml/network_security_config" />
 
-        <activity android:name=".MainActivity"
+        <activity
+            android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity android:name=".AppSelectionActivity"
+        <activity
+            android:name=".AppSelectionActivity"
             android:exported="true">
+
             <!-- Intent filter if you want to launch this activity from a specific intent -->
-        </activity>
-
-        <!-- Добавляем AppInputsActivity в манифест -->
-        <activity android:name=".AppInputsActivity"
-            android:exported="true">
-        </activity>
+        </activity> <!-- Добавляем AppInputsActivity в манифест -->
+        <activity
+            android:name=".AppInputsActivity"
+            android:exported="true"></activity>
         <activity android:name=".RecipientSms" />
         <activity android:name=".SelectedContactsActivity" />
         <activity android:name=".OptionsActivity" />
@@ -47,14 +59,6 @@
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
-
-
-
     </application>
 
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.READ_SMS" />
-    <!-- Add other permissions as needed -->
-    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
-        tools:ignore="QueryAllPackagesPermission" />
 </manifest>

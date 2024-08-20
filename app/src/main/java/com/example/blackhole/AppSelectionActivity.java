@@ -7,7 +7,6 @@ import android.view.View;
 import android.view.animation.LinearInterpolator;
 import android.widget.Button;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
@@ -53,12 +52,12 @@ public class AppSelectionActivity extends AppCompatActivity {
             appAdapter.updateData(appInfos);
             progressBar.setVisibility(View.GONE); // Hide ProgressBar after loading data
             animator.cancel();
+
+            // Restore selected apps state
+            viewModel.restoreSelectedApps();
         });
 
         viewModel.loadInstalledApps(getPackageManager());
-
-        String phoneNumber = getIntent().getStringExtra("PHONE_NUMBER");
-        Toast.makeText(this, "Phone Number: " + phoneNumber, Toast.LENGTH_SHORT).show();
 
         saveButton.setOnClickListener(v -> {
             viewModel.saveSelectedApps();

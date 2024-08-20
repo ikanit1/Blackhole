@@ -77,14 +77,27 @@
             android:textColorHint="#393939"
             android:textSize="16sp" />
 
+        <!-- Port input -->
+        <EditText
+            android:id="@+id/port"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/ip_address"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/edit_text_background"
+            android:hint="Порт *"
+            android:padding="16dp"
+            android:textColorHint="#393939"
+            android:textSize="16sp" />
+
         <!-- Save Button -->
         <Button
             android:id="@+id/save_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/ip_address"
+            android:layout_below="@id/port"
             android:layout_marginStart="16dp"
-            android:layout_marginTop="339dp"
+            android:layout_marginTop="32dp"
             android:layout_marginEnd="16dp"
             android:layout_marginBottom="16dp"
             android:background="@drawable/rounded_button"
@@ -92,6 +105,7 @@
             android:text="Сохранить"
             android:textColor="@android:color/white" />
     </RelativeLayout>
+
     <!-- Bottom Navigation -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_navigation"

@@ -9,18 +9,15 @@ import android.widget.ImageView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class AppAdapter extends RecyclerView.Adapter<AppAdapter.AppViewHolder> {
 
     private List<AppInfo> appList;
-    private List<AppInfo> selectedApps;
     private AppSelectionViewModel viewModel;
 
     public AppAdapter(List<AppInfo> appList, AppSelectionViewModel viewModel) {
         this.appList = appList;
-        this.selectedApps = new ArrayList<>();
         this.viewModel = viewModel;
     }
 
@@ -61,20 +58,19 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.AppViewHolder> {
         public void bind(AppInfo appInfo, AppSelectionViewModel viewModel) {
             appIcon.setImageDrawable(appInfo.getAppIcon());
 
-            itemView.setOnClickListener(v -> {
-                if (viewModel.isSelected(appInfo)) {
-                    checkIcon.setVisibility(View.GONE);
-                    appIcon.setColorFilter(null);
-                } else {
-                    checkIcon.setVisibility(View.VISIBLE);
-                    appIcon.setColorFilter(Color.parseColor("#80000000")); // semi-transparent black
-                }
-                viewModel.toggleAppSelection(appInfo);
-            });
+            // Set initial state
+            updateSelectionState(appInfo, viewModel);
 
+            itemView.setOnClickListener(v -> {
+                viewModel.toggleSelection(appInfo);
+                updateSelectionState(appInfo, viewModel);
+            });
+        }
+
+        private void updateSelectionState(AppInfo appInfo, AppSelectionViewModel viewModel) {
             if (viewModel.isSelected(appInfo)) {
                 checkIcon.setVisibility(View.VISIBLE);
-                appIcon.setColorFilter(Color.parseColor("#80000000"));
+                appIcon.setColorFilter(Color.parseColor("#80000000")); // semi-transparent black
             } else {
                 checkIcon.setVisibility(View.GONE);
                 appIcon.setColorFilter(null);

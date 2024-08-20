@@ -1,37 +1,41 @@
 package com.example.blackhole;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.res.ResourcesCompat;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 public class AppInputsActivity extends AppCompatActivity {
 
     private LinearLayout selectedAppsContainer;
     private EditText ipAddress;
+    private EditText port;
     private Button saveButton;
     private BottomNavigationView bottomNavigationView;
-    private TextView editLink;
 
     private List<String> selectedAppPackageNames;
+    private ApiService apiService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,9 +44,21 @@ public class AppInputsActivity extends AppCompatActivity {
 
         selectedAppsContainer = findViewById(R.id.selected_apps_container);
         ipAddress = findViewById(R.id.ip_address);
+        port = findViewById(R.id.port);
         saveButton = findViewById(R.id.save_button);
         bottomNavigationView = findViewById(R.id.bottom_navigation);
-        editLink = findViewById(R.id.edit_link);
+
+        // Инициализируем Retrofit
+        String baseUrl = "http://localhost:3000/";  // Укажите базовый URL вашего API
+        apiService = RetrofitClient.getClient(baseUrl).create(ApiService.class);
+
+        // Загружаем сохраненные данные
+        SharedPreferences preferences = getSharedPreferences("AppPrefs", MODE_PRIVATE);
+        String savedIp = preferences.getString("server_ip", "");
+        String savedPort = preferences.getString("server_port", "3000");
+
+        ipAddress.setText(savedIp);
+        port.setText(savedPort);
 
         selectedAppPackageNames = getIntent().getStringArrayListExtra("SELECTED_APPS");
         if (selectedAppPackageNames != null) {
@@ -51,21 +67,17 @@ public class AppInputsActivity extends AppCompatActivity {
 
         saveButton.setOnClickListener(v -> {
             String ip = ipAddress.getText().toString();
-            if (ip.isEmpty()) {
-                Toast.makeText(this, "IP сервера не может быть пустым", Toast.LENGTH_SHORT).show();
+            String portValue = port.getText().toString();
+
+            if (TextUtils.isEmpty(ip) || TextUtils.isEmpty(portValue)) {
+                Toast.makeText(this, "IP и порт должны быть заполнены", Toast.LENGTH_SHORT).show();
                 return;
             }
-            // Handle saving logic here
-            showSuccessDialog();
+
+            // Проверяем подключение к базе данных через API
+            validateDatabaseConnection(ip, portValue);
         });
 
-        editLink.setOnClickListener(v -> {
-            Intent intent = new Intent(this, AppSelectionActivity.class);
-            intent.putStringArrayListExtra("SELECTED_APPS", new ArrayList<>(selectedAppPackageNames));
-            startActivityForResult(intent, 1);
-        });
-
-        // Set up BottomNavigationView
         bottomNavigationView.setOnNavigationItemSelectedListener(item -> {
             int itemId = item.getItemId();
 
@@ -90,6 +102,46 @@ public class AppInputsActivity extends AppCompatActivity {
         });
     }
 
+    private void saveServerConfig(String ip, String port) {
+        SharedPreferences preferences = getSharedPreferences("AppPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putString("server_ip", ip);
+        editor.putString("server_port", port);
+        editor.apply();
+    }
+
+    private void validateDatabaseConnection(String ip, String port) {
+        // Параметры аутентификации убраны из запроса
+        apiService.validateConnection(ip, port, null, null).enqueue(new Callback<Boolean>() {
+            @Override
+            public void onResponse(Call<Boolean> call, Response<Boolean> response) {
+                if (response.isSuccessful() && Boolean.TRUE.equals(response.body())) {
+                    // Сохраняем данные
+                    saveServerConfig(ip, port);
+
+                    // Запускаем службу для прослушивания уведомлений
+                    startNotificationListenerService();
+
+                    // Показ диалога об успешном сохранении
+                    showSuccessDialog();
+                } else {
+                    Toast.makeText(AppInputsActivity.this, "Не удалось подключиться к базе данных. Проверьте введенные данные и попробуйте снова.", Toast.LENGTH_LONG).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Boolean> call, Throwable t) {
+                Toast.makeText(AppInputsActivity.this, "Ошибка подключения: " + t.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void startNotificationListenerService() {
+        Intent serviceIntent = new Intent(this, NotificationListener.class);
+        serviceIntent.putStringArrayListExtra("SELECTED_APPS", new ArrayList<>(selectedAppPackageNames));
+        startService(serviceIntent);
+    }
+
     private void displaySelectedApps(List<String> selectedAppPackageNames) {
         selectedAppsContainer.removeAllViews();
         PackageManager pm = getPackageManager();
@@ -110,13 +162,7 @@ public class AppInputsActivity extends AppCompatActivity {
     }
 
     private void showSuccessDialog() {
-        // Inflate the custom dialog layout
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_success, null);
-
-        // Find the TextView and apply the custom font
-        TextView messageTextView = dialogView.findViewById(R.id.success_message);
-        Typeface typeface = ResourcesCompat.getFont(this, R.font.onest_font_family);
-        messageTextView.setTypeface(typeface);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setView(dialogView)
