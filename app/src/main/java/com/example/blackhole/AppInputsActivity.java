@@ -12,6 +12,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
@@ -33,6 +34,7 @@ public class AppInputsActivity extends AppCompatActivity {
     private EditText port;
     private Button saveButton;
     private BottomNavigationView bottomNavigationView;
+    private TextView editLink; // Добавляем TextView для кнопки "Изменить"
 
     private List<String> selectedAppPackageNames;
     private ApiService apiService;
@@ -47,6 +49,7 @@ public class AppInputsActivity extends AppCompatActivity {
         port = findViewById(R.id.port);
         saveButton = findViewById(R.id.save_button);
         bottomNavigationView = findViewById(R.id.bottom_navigation);
+        editLink = findViewById(R.id.edit_link); // Инициализируем TextView
 
         // Инициализируем Retrofit
         String baseUrl = "http://localhost:3000/";  // Укажите базовый URL вашего API
@@ -64,6 +67,13 @@ public class AppInputsActivity extends AppCompatActivity {
         if (selectedAppPackageNames != null) {
             displaySelectedApps(selectedAppPackageNames);
         }
+
+        // Обработчик нажатия на кнопку "Изменить"
+        editLink.setOnClickListener(v -> {
+            Intent intent = new Intent(AppInputsActivity.this, AppSelectionActivity.class);
+            intent.putStringArrayListExtra("SELECTED_APPS", new ArrayList<>(selectedAppPackageNames));
+            startActivityForResult(intent, 1); // Код запроса 1 для получения результата
+        });
 
         saveButton.setOnClickListener(v -> {
             String ip = ipAddress.getText().toString();
@@ -111,7 +121,6 @@ public class AppInputsActivity extends AppCompatActivity {
     }
 
     private void validateDatabaseConnection(String ip, String port) {
-        // Параметры аутентификации убраны из запроса
         apiService.validateConnection(ip, port, null, null).enqueue(new Callback<Boolean>() {
             @Override
             public void onResponse(Call<Boolean> call, Response<Boolean> response) {
@@ -125,22 +134,45 @@ public class AppInputsActivity extends AppCompatActivity {
                     // Показ диалога об успешном сохранении
                     showSuccessDialog();
                 } else {
+                    // Сохраняем информацию об ошибке в DLQ
+                    saveErrorLog("Ошибка подключения: не удалось подключиться к базе данных. Проверьте введенные данные.");
                     Toast.makeText(AppInputsActivity.this, "Не удалось подключиться к базе данных. Проверьте введенные данные и попробуйте снова.", Toast.LENGTH_LONG).show();
                 }
             }
 
             @Override
             public void onFailure(Call<Boolean> call, Throwable t) {
+                // Сохраняем информацию об ошибке в DLQ
+                saveErrorLog("Ошибка подключения: " + t.getMessage());
                 Toast.makeText(AppInputsActivity.this, "Ошибка подключения: " + t.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
     }
+    private void saveErrorLog(String errorMessage) {
+        SharedPreferences preferences = getSharedPreferences("DLQPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
 
+        // Сохраняем текущее время и сообщение об ошибке
+        long currentTimeMillis = System.currentTimeMillis();
+        String time = android.text.format.DateFormat.format("yyyy-MM-dd HH:mm:ss", new java.util.Date(currentTimeMillis)).toString();
+
+        // Форматируем лог
+        String logEntry = "Ошибка: " + errorMessage + ", Время: " + time + "\n";
+
+        // Получаем текущие логи и добавляем новый
+        String currentLogs = preferences.getString("dlq_logs", "");
+        String updatedLogs = currentLogs + logEntry;
+
+        editor.putString("dlq_logs", updatedLogs);
+        editor.apply();
+    }
     private void startNotificationListenerService() {
         Intent serviceIntent = new Intent(this, NotificationListener.class);
         serviceIntent.putStringArrayListExtra("SELECTED_APPS", new ArrayList<>(selectedAppPackageNames));
         startService(serviceIntent);
     }
+
+
 
     private void displaySelectedApps(List<String> selectedAppPackageNames) {
         selectedAppsContainer.removeAllViews();

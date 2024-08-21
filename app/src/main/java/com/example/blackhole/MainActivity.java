@@ -1,6 +1,7 @@
 package com.example.blackhole;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
@@ -18,6 +19,20 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Проверяем, был ли номер телефона уже введен
+        SharedPreferences preferences = getSharedPreferences("user_prefs", MODE_PRIVATE);
+        String savedPhoneNumber = preferences.getString("phone_number", null);
+        String savedCountryCode = preferences.getString("country_code", null);
+
+        if (savedPhoneNumber != null && savedCountryCode != null) {
+            // Если номер уже введен, переходим на следующую страницу
+            Intent intent = new Intent(MainActivity.this, AppSelectionActivity.class);
+            startActivity(intent);
+            finish(); // Завершаем MainActivity, чтобы пользователь не мог вернуться назад
+            return;
+        }
+
         setContentView(R.layout.activity_main);
 
         countryCodeSpinner = findViewById(R.id.countryCodeSpinner);
@@ -43,17 +58,31 @@ public class MainActivity extends AppCompatActivity {
         continueButton.setOnClickListener(v -> {
             String countryCode = countryCodeSpinner.getSelectedItem().toString();
             String phoneNumber = phoneNumberEditText.getText().toString().trim();
+            String fullPhoneNumber = countryCode + phoneNumber;
 
             if (phoneNumber.isEmpty()) {
                 Toast.makeText(MainActivity.this, "Введите номер телефона", Toast.LENGTH_SHORT).show();
+            } else if (!isValidPhoneNumber(fullPhoneNumber)) {
+                Toast.makeText(MainActivity.this, "Некорректный номер телефона", Toast.LENGTH_SHORT).show();
             } else {
-                // Handle the phone number submission
+                // Сохраняем номер телефона и код страны
+                SharedPreferences.Editor editor = preferences.edit();
+                editor.putString("phone_number", phoneNumber);
+                editor.putString("country_code", countryCode);
+                editor.apply();
 
-                // Intent to start AppSelectionActivity
+                // Переход на следующую страницу
                 Intent intent = new Intent(MainActivity.this, AppSelectionActivity.class);
-                intent.putExtra("PHONE_NUMBER", countryCode + phoneNumber);
+                intent.putExtra("PHONE_NUMBER", fullPhoneNumber);
                 startActivity(intent);
             }
         });
+    }
+
+    // Метод для проверки корректности номера телефона
+    private boolean isValidPhoneNumber(String phoneNumber) {
+        // Регулярное выражение для валидации номера телефона
+        String regex = "^\\+\\d{1,3}\\d{4,14}(?:x.+)?$";
+        return phoneNumber.matches(regex);
     }
 }

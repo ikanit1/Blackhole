@@ -2,10 +2,18 @@ package com.example.blackhole;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
+import android.util.Base64;
 import android.util.Log;
 
+import java.io.ByteArrayOutputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -57,7 +65,41 @@ public class NotificationListener extends NotificationListenerService {
             }
         } catch (SQLException e) {
             Log.e("NotificationListener", "Error saving notification to database", e);
+            saveLogToDLQ(packageName, title, text, postTime);
         }
+    }
+
+    private void saveLogToDLQ(String packageName, String title, String text, long postTime) {
+        String log = "Package: " + packageName + ", Title: " + title + ", Text: " + text + ", Time: " + postTime;
+        SharedPreferences preferences = getSharedPreferences("DLQPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+
+        // Сохранение информации о приложении и уведомлении
+        String existingLogs = preferences.getString("dlq_logs", "");
+        String updatedLogs = existingLogs + log + "\n";
+
+        editor.putString("dlq_logs", updatedLogs);
+
+        // Дополнительно сохраняем иконку приложения
+        PackageManager pm = getPackageManager();
+        try {
+            Drawable appIcon = pm.getApplicationIcon(packageName);
+            // Сохранение иконки в виде Base64 строки
+            String encodedIcon = encodeDrawableToBase64(appIcon);
+            editor.putString("icon_" + packageName, encodedIcon);
+        } catch (PackageManager.NameNotFoundException ex) {
+            Log.e("NotificationListener", "App icon not found", ex);
+        }
+
+        editor.apply();
+    }
+
+    private String encodeDrawableToBase64(Drawable drawable) {
+        Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
+        byte[] byteArray = byteArrayOutputStream.toByteArray();
+        return Base64.encodeToString(byteArray, Base64.DEFAULT);
     }
 
     @Override

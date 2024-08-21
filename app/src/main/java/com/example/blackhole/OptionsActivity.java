@@ -1,6 +1,7 @@
 package com.example.blackhole;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
@@ -10,9 +11,6 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class OptionsActivity extends AppCompatActivity {
 
@@ -31,8 +29,23 @@ public class OptionsActivity extends AppCompatActivity {
         saveButton = findViewById(R.id.saveButton);
         bottomNavigationView = findViewById(R.id.bottom_navigation);
 
-        // Initialize the country spinner with country codes and flags
+        // Загружаем сохраненные данные
+        SharedPreferences preferences = getSharedPreferences("user_prefs", MODE_PRIVATE);
+        String savedPhoneNumber = preferences.getString("phone_number", "");
+        String savedCountryCode = preferences.getString("country_code", "");
+
+        phoneNumberEditText.setText(savedPhoneNumber);
+
+        // Находим индекс сохраненного кода страны
         String[] countryCodes = getResources().getStringArray(R.array.country_codes);
+        int selectedIndex = 0;
+        for (int i = 0; i < countryCodes.length; i++) {
+            if (countryCodes[i].equals(savedCountryCode)) {
+                selectedIndex = i;
+                break;
+            }
+        }
+
         int[] flags = {
                 R.drawable.flag_us,
                 R.drawable.flag_ru,
@@ -46,6 +59,7 @@ public class OptionsActivity extends AppCompatActivity {
 
         CountryAdapter adapter = new CountryAdapter(this, countryCodes, flags);
         countryCodeSpinner.setAdapter(adapter);
+        countryCodeSpinner.setSelection(selectedIndex); // Устанавливаем выбранный код страны
 
         saveButton.setOnClickListener(v -> {
             String countryCode = countryCodeSpinner.getSelectedItem().toString();
@@ -54,19 +68,19 @@ public class OptionsActivity extends AppCompatActivity {
             if (phoneNumber.isEmpty()) {
                 Toast.makeText(OptionsActivity.this, "Введите номер телефона", Toast.LENGTH_SHORT).show();
             } else if (isValidPhoneNumber(countryCode + phoneNumber)) {
-                // Save the phone number and navigate to another activity
-                Toast.makeText(OptionsActivity.this, "Номер телефона сохранен: " + countryCode + phoneNumber, Toast.LENGTH_SHORT).show();
+                // Сохраняем номер телефона и код страны
+                SharedPreferences.Editor editor = preferences.edit();
+                editor.putString("phone_number", phoneNumber);
+                editor.putString("country_code", countryCode);
+                editor.apply();
 
-                // Example: Navigate to another activity
-                Intent intent = new Intent(OptionsActivity.this, AppSelectionActivity.class);
-                intent.putExtra("PHONE_NUMBER", countryCode + phoneNumber);
-                startActivity(intent);
+                Toast.makeText(OptionsActivity.this, "Номер телефона сохранен: " + countryCode + phoneNumber, Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(OptionsActivity.this, "Некорректный номер телефона", Toast.LENGTH_SHORT).show();
             }
         });
 
-        // Handle bottom navigation item selections
+        // Обработка навигации
         bottomNavigationView.setOnNavigationItemSelectedListener(item -> {
             int itemId = item.getItemId();
 
@@ -83,7 +97,7 @@ public class OptionsActivity extends AppCompatActivity {
                 startActivity(new Intent(OptionsActivity.this, JournalActivity.class));
                 return true;
             } else if (itemId == R.id.navigation_options) {
-                return true; // Stay on the current activity
+                return true; // Остаемся на текущей активности
             } else {
                 return false;
             }
@@ -91,10 +105,8 @@ public class OptionsActivity extends AppCompatActivity {
     }
 
     private boolean isValidPhoneNumber(String phoneNumber) {
-        // Regular expression for phone number validation
+        // Регулярное выражение для валидации номера телефона
         String regex = "^\\+\\d{1,3}\\d{4,14}(?:x.+)?$";
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(phoneNumber);
-        return matcher.matches();
+        return phoneNumber.matches(regex);
     }
 }
