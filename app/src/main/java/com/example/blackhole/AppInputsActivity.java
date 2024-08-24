@@ -4,9 +4,12 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Base64;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -20,6 +23,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,7 +38,7 @@ public class AppInputsActivity extends AppCompatActivity {
     private EditText port;
     private Button saveButton;
     private BottomNavigationView bottomNavigationView;
-    private TextView editLink; // Добавляем TextView для кнопки "Изменить"
+    private TextView editLink; // TextView for the "Edit" button
 
     private List<String> selectedAppPackageNames;
     private ApiService apiService;
@@ -49,13 +53,13 @@ public class AppInputsActivity extends AppCompatActivity {
         port = findViewById(R.id.port);
         saveButton = findViewById(R.id.save_button);
         bottomNavigationView = findViewById(R.id.bottom_navigation);
-        editLink = findViewById(R.id.edit_link); // Инициализируем TextView
+        editLink = findViewById(R.id.edit_link); // Initialize TextView
 
-        // Инициализируем Retrofit
-        String baseUrl = "http://localhost:3000/";  // Укажите базовый URL вашего API
+        // Initialize Retrofit
+        String baseUrl = "http://localhost:3000/";  // Specify the base URL of your API
         apiService = RetrofitClient.getClient(baseUrl).create(ApiService.class);
 
-        // Загружаем сохраненные данные
+        // Load saved data
         SharedPreferences preferences = getSharedPreferences("AppPrefs", MODE_PRIVATE);
         String savedIp = preferences.getString("server_ip", "");
         String savedPort = preferences.getString("server_port", "3000");
@@ -63,16 +67,17 @@ public class AppInputsActivity extends AppCompatActivity {
         ipAddress.setText(savedIp);
         port.setText(savedPort);
 
+        // Get selected app package names from the intent
         selectedAppPackageNames = getIntent().getStringArrayListExtra("SELECTED_APPS");
         if (selectedAppPackageNames != null) {
             displaySelectedApps(selectedAppPackageNames);
         }
 
-        // Обработчик нажатия на кнопку "Изменить"
+        // Handle the "Edit" button click
         editLink.setOnClickListener(v -> {
             Intent intent = new Intent(AppInputsActivity.this, AppSelectionActivity.class);
             intent.putStringArrayListExtra("SELECTED_APPS", new ArrayList<>(selectedAppPackageNames));
-            startActivityForResult(intent, 1); // Код запроса 1 для получения результата
+            startActivityForResult(intent, 1); // Request code 1 for receiving result
         });
 
         saveButton.setOnClickListener(v -> {
@@ -80,11 +85,11 @@ public class AppInputsActivity extends AppCompatActivity {
             String portValue = port.getText().toString();
 
             if (TextUtils.isEmpty(ip) || TextUtils.isEmpty(portValue)) {
-                Toast.makeText(this, "IP и порт должны быть заполнены", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "IP and port must be filled", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            // Проверяем подключение к базе данных через API
+            // Validate database connection via API
             validateDatabaseConnection(ip, portValue);
         });
 
@@ -125,54 +130,103 @@ public class AppInputsActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<Boolean> call, Response<Boolean> response) {
                 if (response.isSuccessful() && Boolean.TRUE.equals(response.body())) {
-                    // Сохраняем данные
+                    // Save data
                     saveServerConfig(ip, port);
 
-                    // Запускаем службу для прослушивания уведомлений
+                    // Start notification listener service
                     startNotificationListenerService();
 
-                    // Показ диалога об успешном сохранении
+                    // Show success dialog
                     showSuccessDialog();
                 } else {
-                    // Сохраняем информацию об ошибке в DLQ
-                    saveErrorLog("Ошибка подключения: не удалось подключиться к базе данных. Проверьте введенные данные.");
-                    Toast.makeText(AppInputsActivity.this, "Не удалось подключиться к базе данных. Проверьте введенные данные и попробуйте снова.", Toast.LENGTH_LONG).show();
+                    // Save error information in DLQ
+                    saveErrorLog("Connection error: Failed to connect to the database. Check the input data.");
+                    Toast.makeText(AppInputsActivity.this, "Failed to connect to the database. Check the input data and try again.", Toast.LENGTH_LONG).show();
                 }
+
+                // Save selected apps to DLQ regardless of connection result
+                saveSelectedAppsToDLQ();
             }
 
             @Override
             public void onFailure(Call<Boolean> call, Throwable t) {
-                // Сохраняем информацию об ошибке в DLQ
-                saveErrorLog("Ошибка подключения: " + t.getMessage());
-                Toast.makeText(AppInputsActivity.this, "Ошибка подключения: " + t.getMessage(), Toast.LENGTH_LONG).show();
+                // Save error information in DLQ
+                saveErrorLog("Connection error: " + t.getMessage());
+                Toast.makeText(AppInputsActivity.this, "Connection error: " + t.getMessage(), Toast.LENGTH_LONG).show();
+
+                // Save selected apps to DLQ regardless of connection result
+                saveSelectedAppsToDLQ();
             }
         });
     }
+
+    private void saveSelectedAppsToDLQ() {
+        SharedPreferences preferences = getSharedPreferences("DLQPrefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+
+        for (String packageName : selectedAppPackageNames) {
+            try {
+                PackageManager pm = getPackageManager();
+                ApplicationInfo appInfo = pm.getApplicationInfo(packageName, 0);
+                String appName = pm.getApplicationLabel(appInfo).toString();
+
+                // Save app icon as Base64 string
+                Drawable appIcon = pm.getApplicationIcon(appInfo);
+                String encodedIcon = encodeDrawableToBase64(appIcon);
+
+                long currentTimeMillis = System.currentTimeMillis();
+                String time = android.text.format.DateFormat.format("yyyy-MM-dd HH:mm:ss", new java.util.Date(currentTimeMillis)).toString();
+
+                // Format the log entry
+                String logEntry = "App: " + packageName + ", Name: " + appName + ", Time: " + time + "\n";
+
+                // Save the log and icon
+                String currentLogs = preferences.getString("dlq_logs", "");
+                String updatedLogs = currentLogs + logEntry;
+                editor.putString("dlq_logs", updatedLogs);
+                editor.putString("icon_" + packageName, encodedIcon);
+            } catch (PackageManager.NameNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+        editor.apply();
+    }
+
+    private String encodeDrawableToBase64(Drawable drawable) {
+        if (drawable != null) {
+            Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
+            byte[] byteArray = byteArrayOutputStream.toByteArray();
+            return Base64.encodeToString(byteArray, Base64.DEFAULT);
+        }
+        return null;
+    }
+
     private void saveErrorLog(String errorMessage) {
         SharedPreferences preferences = getSharedPreferences("DLQPrefs", MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
 
-        // Сохраняем текущее время и сообщение об ошибке
+        // Save current time and error message
         long currentTimeMillis = System.currentTimeMillis();
         String time = android.text.format.DateFormat.format("yyyy-MM-dd HH:mm:ss", new java.util.Date(currentTimeMillis)).toString();
 
-        // Форматируем лог
-        String logEntry = "Ошибка: " + errorMessage + ", Время: " + time + "\n";
+        // Format the log entry
+        String logEntry = "Error: " + errorMessage + ", Time: " + time + "\n";
 
-        // Получаем текущие логи и добавляем новый
+        // Get current logs and add the new one
         String currentLogs = preferences.getString("dlq_logs", "");
         String updatedLogs = currentLogs + logEntry;
 
         editor.putString("dlq_logs", updatedLogs);
         editor.apply();
     }
+
     private void startNotificationListenerService() {
         Intent serviceIntent = new Intent(this, NotificationListener.class);
         serviceIntent.putStringArrayListExtra("SELECTED_APPS", new ArrayList<>(selectedAppPackageNames));
         startService(serviceIntent);
     }
-
-
 
     private void displaySelectedApps(List<String> selectedAppPackageNames) {
         selectedAppsContainer.removeAllViews();

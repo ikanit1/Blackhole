@@ -1,27 +1,28 @@
 package com.example.blackhole;
 
-import android.content.Context;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
+import android.content.Context;
 
-@Database(entities = {LogEntry.class, SelectedApp.class}, version = 1)
+@Database(entities = {NotificationRecord.class, LogEntry.class, SelectedApp.class}, version = 2) // Добавляем SelectedApp
 public abstract class AppDatabase extends RoomDatabase {
-    public abstract LogEntryDao logEntryDao();
+
+    private static AppDatabase instance;
+
     public abstract SelectedAppsDao selectedAppsDao();
 
-    private static volatile AppDatabase INSTANCE;
+    public abstract NotificationDao notificationDao();
 
-    public static AppDatabase getDatabase(final Context context) {
-        if (INSTANCE == null) {
-            synchronized (AppDatabase.class) {
-                if (INSTANCE == null) {
-                    INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
-                                    AppDatabase.class, "app_database")
-                            .build();
-                }
-            }
+    public abstract LogEntryDao logEntryDao();  // Реализуем метод logEntryDao()
+
+    public static synchronized AppDatabase getInstance(Context context) {
+        if (instance == null) {
+            instance = Room.databaseBuilder(context.getApplicationContext(),
+                            AppDatabase.class, "app_database")
+                    .fallbackToDestructiveMigration()
+                    .build();
         }
-        return INSTANCE;
+        return instance;
     }
 }

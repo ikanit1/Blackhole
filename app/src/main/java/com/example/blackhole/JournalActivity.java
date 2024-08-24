@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.blackhole.LogAdapter;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.List;
@@ -96,7 +97,7 @@ public class JournalActivity extends AppCompatActivity {
 
     private void loadLogsAsync(String level) {
         executorService.execute(() -> {
-            AppDatabase db = AppDatabase.getDatabase(getApplicationContext());
+            AppDatabase db = AppDatabase.getInstance(getApplicationContext());  // Используем getInstance()
             List<LogEntry> logs;
 
             if (level.equals("ALL")) {

@@ -1,5 +1,8 @@
 package com.example.blackhole;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
@@ -12,6 +15,8 @@ import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.util.Base64;
 import android.util.Log;
+
+import androidx.core.app.NotificationCompat;
 
 import java.io.ByteArrayOutputStream;
 import java.sql.Connection;
@@ -31,12 +36,44 @@ public class NotificationListener extends NotificationListenerService {
     public void onCreate() {
         super.onCreate();
 
-        SharedPreferences preferences = getSharedPreferences("AppPrefs", MODE_PRIVATE);
-        serverIp = preferences.getString("server_ip", "");
+        // Create the notification channel
+        createNotificationChannel();
 
-        // Загружаем выбранные пакеты приложений
-        selectedAppPackageNames = new HashSet<>(preferences.getStringSet("selected_apps", new HashSet<>()));
+        // Create a notification for the foreground service
+        Notification notification = new NotificationCompat.Builder(this, "Your_Channel_ID")
+                .setContentTitle("Monitoring Notifications")
+                .setContentText("Listening for notifications in the background")
+                .setSmallIcon(R.drawable.img) // Use a valid drawable here
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .build();
+
+        // Start the service in the foreground with the notification
+        startForeground(1, notification);
+
+        // Load previously selected app packages
+        SharedPreferences preferences = getSharedPreferences("AppPrefs", MODE_PRIVATE);
+        Set<String> savedPackages = preferences.getStringSet("selected_apps", null);
+        if (savedPackages != null) {
+            selectedAppPackageNames = new HashSet<>(savedPackages);
+        }
     }
+
+    // Вызовите этот метод, чтобы создать канал уведомлений перед использованием Foreground Service
+    private void createNotificationChannel() {
+        NotificationChannel serviceChannel = new NotificationChannel(
+                "Your_Channel_ID",
+                "Notification Listener Service Channel",
+                NotificationManager.IMPORTANCE_DEFAULT
+        );
+
+        NotificationManager manager = getSystemService(NotificationManager.class);
+        if (manager != null) {
+            manager.createNotificationChannel(serviceChannel);
+        }
+    }
+
+
+
 
     @Override
     public void onNotificationPosted(StatusBarNotification sbn) {
@@ -104,18 +141,21 @@ public class NotificationListener extends NotificationListenerService {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        List<String> packages = intent.getStringArrayListExtra("SELECTED_APPS");
-        if (packages != null) {
+        if (intent != null && intent.getStringArrayListExtra("SELECTED_APPS") != null) {
+            List<String> packages = intent.getStringArrayListExtra("SELECTED_APPS");
             selectedAppPackageNames = new HashSet<>(packages);
 
-            // Сохраняем выбранные приложения для использования позже
+            // Save selected apps for later use
             SharedPreferences preferences = getSharedPreferences("AppPrefs", MODE_PRIVATE);
             SharedPreferences.Editor editor = preferences.edit();
             editor.putStringSet("selected_apps", selectedAppPackageNames);
             editor.apply();
         }
+
+        // Indicate that the service should continue running until explicitly stopped
         return START_STICKY;
     }
+
 
     @Override
     public void onNotificationRemoved(StatusBarNotification sbn) {

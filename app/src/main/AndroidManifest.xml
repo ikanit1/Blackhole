@@ -3,15 +3,20 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.example.blackhole">
 
+    <!-- Permissions should be placed here -->
     <uses-feature
         android:name="android.hardware.telephony"
         android:required="false" />
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.READ_SMS" /> <!-- Add other permissions as needed -->
-    <uses-permission
-        android:name="android.permission.QUERY_ALL_PACKAGES"
+    <uses-permission android:name="android.permission.READ_SMS" />
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"
+        tools:ignore="WrongManifestParent" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE" />
+
 
     <application
         android:usesCleartextTraffic="true"
@@ -24,6 +29,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar"
         tools:targetApi="31">
+
         <meta-data
             android:name="com.google.android.actions"
             android:resource="@xml/network_security_config" />
@@ -33,19 +39,17 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity
             android:name=".AppSelectionActivity"
             android:exported="true">
-
             <!-- Intent filter if you want to launch this activity from a specific intent -->
-        </activity> <!-- Добавляем AppInputsActivity в манифест -->
+        </activity>
         <activity
             android:name=".AppInputsActivity"
-            android:exported="true"></activity>
+            android:exported="true" />
         <activity android:name=".RecipientSms" />
         <activity android:name=".DLQActivity" />
         <activity android:name=".SelectedContactsActivity" />
@@ -54,12 +58,21 @@
 
         <service
             android:name=".NotificationListener"
-            android:exported="true"
-            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
-    </application>
 
+
+
+        <receiver android:name=".BootReceiver" android:enabled="true" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+
+    </application>
 </manifest>
