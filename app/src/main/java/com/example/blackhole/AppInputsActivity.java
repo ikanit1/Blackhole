@@ -38,7 +38,7 @@ public class AppInputsActivity extends AppCompatActivity {
     private EditText port;
     private Button saveButton;
     private BottomNavigationView bottomNavigationView;
-    private TextView editLink; // TextView for the "Edit" button
+    private TextView editLink;
 
     private List<String> selectedAppPackageNames;
     private ApiService apiService;
@@ -53,10 +53,10 @@ public class AppInputsActivity extends AppCompatActivity {
         port = findViewById(R.id.port);
         saveButton = findViewById(R.id.save_button);
         bottomNavigationView = findViewById(R.id.bottom_navigation);
-        editLink = findViewById(R.id.edit_link); // Initialize TextView
+        editLink = findViewById(R.id.edit_link);
 
         // Initialize Retrofit
-        String baseUrl = "http://localhost:3000/";  // Specify the base URL of your API
+        String baseUrl = "http://91.234.199.200:5000/";
         apiService = RetrofitClient.getClient(baseUrl).create(ApiService.class);
 
         // Load saved data
@@ -77,7 +77,7 @@ public class AppInputsActivity extends AppCompatActivity {
         editLink.setOnClickListener(v -> {
             Intent intent = new Intent(AppInputsActivity.this, AppSelectionActivity.class);
             intent.putStringArrayListExtra("SELECTED_APPS", new ArrayList<>(selectedAppPackageNames));
-            startActivityForResult(intent, 1); // Request code 1 for receiving result
+            startActivityForResult(intent, 1);
         });
 
         saveButton.setOnClickListener(v -> {
@@ -91,6 +91,9 @@ public class AppInputsActivity extends AppCompatActivity {
 
             // Validate database connection via API
             validateDatabaseConnection(ip, portValue);
+
+            // After validation, send the message to the server
+            sendMessageToServer();
         });
 
         bottomNavigationView.setOnNavigationItemSelectedListener(item -> {
@@ -130,32 +133,47 @@ public class AppInputsActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<Boolean> call, Response<Boolean> response) {
                 if (response.isSuccessful() && Boolean.TRUE.equals(response.body())) {
-                    // Save data
                     saveServerConfig(ip, port);
-
-                    // Start notification listener service
                     startNotificationListenerService();
-
-                    // Show success dialog
                     showSuccessDialog();
                 } else {
-                    // Save error information in DLQ
                     saveErrorLog("Connection error: Failed to connect to the database. Check the input data.");
                     Toast.makeText(AppInputsActivity.this, "Failed to connect to the database. Check the input data and try again.", Toast.LENGTH_LONG).show();
                 }
-
-                // Save selected apps to DLQ regardless of connection result
                 saveSelectedAppsToDLQ();
             }
 
             @Override
             public void onFailure(Call<Boolean> call, Throwable t) {
-                // Save error information in DLQ
                 saveErrorLog("Connection error: " + t.getMessage());
                 Toast.makeText(AppInputsActivity.this, "Connection error: " + t.getMessage(), Toast.LENGTH_LONG).show();
-
-                // Save selected apps to DLQ regardless of connection result
                 saveSelectedAppsToDLQ();
+            }
+        });
+    }
+
+    private void sendMessageToServer() {
+        String datetime = "2023-10-01T12:00:00";
+        String phoneNumber = "+79266666666";
+        String recipient = "user";
+        String text = "llol";
+        String status = "1";
+
+        MessageData messageData = new MessageData(datetime, phoneNumber, recipient, text, status);
+
+        apiService.sendMessage(messageData).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(AppInputsActivity.this, "Message sent successfully!", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(AppInputsActivity.this, "Failed to send message", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Toast.makeText(AppInputsActivity.this, "Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -170,17 +188,14 @@ public class AppInputsActivity extends AppCompatActivity {
                 ApplicationInfo appInfo = pm.getApplicationInfo(packageName, 0);
                 String appName = pm.getApplicationLabel(appInfo).toString();
 
-                // Save app icon as Base64 string
                 Drawable appIcon = pm.getApplicationIcon(appInfo);
                 String encodedIcon = encodeDrawableToBase64(appIcon);
 
                 long currentTimeMillis = System.currentTimeMillis();
                 String time = android.text.format.DateFormat.format("yyyy-MM-dd HH:mm:ss", new java.util.Date(currentTimeMillis)).toString();
 
-                // Format the log entry
                 String logEntry = "App: " + packageName + ", Name: " + appName + ", Time: " + time + "\n";
 
-                // Save the log and icon
                 String currentLogs = preferences.getString("dlq_logs", "");
                 String updatedLogs = currentLogs + logEntry;
                 editor.putString("dlq_logs", updatedLogs);
@@ -194,8 +209,8 @@ public class AppInputsActivity extends AppCompatActivity {
 
     private String encodeDrawableToBase64(Drawable drawable) {
         if (drawable != null) {
-            Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            Bitmap bitmap = ((BitmapDrawable) drawable).getBitmap();
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
             byte[] byteArray = byteArrayOutputStream.toByteArray();
             return Base64.encodeToString(byteArray, Base64.DEFAULT);
@@ -207,14 +222,11 @@ public class AppInputsActivity extends AppCompatActivity {
         SharedPreferences preferences = getSharedPreferences("DLQPrefs", MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
 
-        // Save current time and error message
         long currentTimeMillis = System.currentTimeMillis();
         String time = android.text.format.DateFormat.format("yyyy-MM-dd HH:mm:ss", new java.util.Date(currentTimeMillis)).toString();
 
-        // Format the log entry
         String logEntry = "Error: " + errorMessage + ", Time: " + time + "\n";
 
-        // Get current logs and add the new one
         String currentLogs = preferences.getString("dlq_logs", "");
         String updatedLogs = currentLogs + logEntry;
 
@@ -225,21 +237,40 @@ public class AppInputsActivity extends AppCompatActivity {
     private void startNotificationListenerService() {
         Intent serviceIntent = new Intent(this, NotificationListener.class);
         serviceIntent.putStringArrayListExtra("SELECTED_APPS", new ArrayList<>(selectedAppPackageNames));
-        startService(serviceIntent);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            startForegroundService(serviceIntent);
+        } else {
+            startService(serviceIntent);
+        }
     }
 
     private void displaySelectedApps(List<String> selectedAppPackageNames) {
+        // Очищаем контейнер перед добавлением новых иконок
         selectedAppsContainer.removeAllViews();
+
+        // Получаем менеджер пакетов
         PackageManager pm = getPackageManager();
+
         for (String packageName : selectedAppPackageNames) {
             try {
+                // Получаем информацию о приложении
                 ApplicationInfo appInfo = pm.getApplicationInfo(packageName, 0);
+
+                // Получаем иконку приложения
                 Drawable appIcon = pm.getApplicationIcon(appInfo);
+
+                // Создаем ImageView для отображения иконки
                 ImageView appIconView = new ImageView(this);
+
+                // Настраиваем параметры отображения иконки
                 LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(100, 100);
-                params.setMargins(8, 8, 8, 8);
+                params.setMargins(8, 8, 8, 8); // Устанавливаем отступы
                 appIconView.setLayoutParams(params);
+
+                // Устанавливаем иконку в ImageView
                 appIconView.setImageDrawable(appIcon);
+
+                // Добавляем ImageView в контейнер
                 selectedAppsContainer.addView(appIconView);
             } catch (PackageManager.NameNotFoundException e) {
                 e.printStackTrace();
@@ -247,24 +278,12 @@ public class AppInputsActivity extends AppCompatActivity {
         }
     }
 
+
     private void showSuccessDialog() {
-        View dialogView = getLayoutInflater().inflate(R.layout.dialog_success, null);
-
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setView(dialogView)
-                .setPositiveButton("OK", (dialog, which) -> dialog.dismiss())
-                .create()
-                .show();
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 1 && resultCode == RESULT_OK) {
-            selectedAppPackageNames = data.getStringArrayListExtra("SELECTED_APPS");
-            if (selectedAppPackageNames != null) {
-                displaySelectedApps(selectedAppPackageNames);
-            }
-        }
+        builder.setTitle("Success");
+        builder.setMessage("Data has been saved successfully.");
+        builder.setPositiveButton("OK", (dialog, which) -> dialog.dismiss());
+        builder.show();
     }
 }

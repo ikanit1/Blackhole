@@ -13,9 +13,7 @@ public class NotificationRecord {
     private String appName;
     private String messageTitle;
     private String messageBody;
-    private String notificationType; // "push" или "sms"
-
-    // Конструкторы, геттеры и сеттеры
+    private String notificationType; // "push" or "sms"
 
     public NotificationRecord(long timestamp, String appName, String messageTitle, String messageBody, String notificationType) {
         this.timestamp = timestamp;
@@ -25,6 +23,7 @@ public class NotificationRecord {
         this.notificationType = notificationType;
     }
 
+    // Getters and setters
     public int getId() {
         return id;
     }

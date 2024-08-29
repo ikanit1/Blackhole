@@ -2,12 +2,8 @@ package com.example.blackhole;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.util.Base64;
 import android.util.Log;
 import android.view.Gravity;
 import android.widget.ImageView;
@@ -46,46 +42,20 @@ public class DLQActivity extends AppCompatActivity {
                     // Extract information from logs
                     String[] logParts = logEntry.split(", ");
 
-                    if (logParts.length >= 4) {
-                        // Expected format: packageName, title, text, time
-                        String packageName = extractValue(logParts[0]);
-                        String title = extractValue(logParts[1]);
-                        String text = extractValue(logParts[2]);
-                        String time = extractValue(logParts[3]);
-
-                        // Load app icon from SharedPreferences
-                        String encodedIcon = preferences.getString("icon_" + packageName, null);
-                        Drawable appIcon = decodeBase64ToDrawable(encodedIcon);
-
-                        if (appIcon == null) {
-                            appIcon = ContextCompat.getDrawable(this, R.drawable.img); // Default icon
-                        }
-
-                        // Add log entry to the UI
-                        addLogEntryToUI(appIcon, title, text, time);
-
-                    } else if (logParts.length == 3) {
-                        // Format for errors: title, text, time (no packageName)
+                    if (logParts.length >= 3) {
+                        // Assuming log format is title, text, time
                         String title = extractValue(logParts[0]);
                         String text = extractValue(logParts[1]);
                         String time = extractValue(logParts[2]);
 
-                        // Use default icon for errors
-                        addLogEntryToUI(ContextCompat.getDrawable(this, R.drawable.img), title, text, time);
+                        // Use default icon for all notifications
+                        Drawable appIcon = ContextCompat.getDrawable(this, R.drawable.img); // Default icon
 
-                    } else if (logParts.length == 2) {
-                        // Simple message format: title, time
-                        String title = extractValue(logParts[0]);
-                        String time = extractValue(logParts[1]);
-
-                        // Use default icon for messages
-                        addLogEntryToUI(ContextCompat.getDrawable(this, R.drawable.img), title, "", time);
-
-                    } else {
-                        // Log does not have the expected format
-                        Log.e("DLQActivity", "Invalid log entry format: " + logEntry);
+                        // Add log entry to the UI
+                        addLogEntryToUI(appIcon, title, text, time);
                     }
                 } catch (Exception e) {
+                    // Log error to console but do not display it to the user
                     Log.e("DLQActivity", "Error processing log entry: " + logEntry, e);
                 }
             }
@@ -123,20 +93,6 @@ public class DLQActivity extends AppCompatActivity {
         } else {
             return logPart.trim();
         }
-    }
-
-    // Decode a Base64 string to a Drawable object
-    private Drawable decodeBase64ToDrawable(String encodedImage) {
-        if (encodedImage != null && !encodedImage.isEmpty()) {
-            try {
-                byte[] decodedByte = Base64.decode(encodedImage, Base64.DEFAULT);
-                Bitmap bitmap = BitmapFactory.decodeByteArray(decodedByte, 0, decodedByte.length);
-                return new BitmapDrawable(getResources(), bitmap);
-            } catch (IllegalArgumentException e) {
-                Log.e("DLQActivity", "Error decoding Base64", e);
-            }
-        }
-        return ContextCompat.getDrawable(this, R.drawable.img); // Default icon if decoding fails
     }
 
     // Add a log entry to the UI

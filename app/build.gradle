@@ -43,6 +43,8 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-livedata:2.8.4"
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.8.4"
     implementation libs.recyclerview
+    implementation "androidx.room:room-runtime:2.6.1"
+    annotationProcessor "androidx.room:room-compiler:2.6.1"
     implementation libs.squareup.retrofit
     implementation libs.converter.gson
     annotationProcessor libs.room.compiler

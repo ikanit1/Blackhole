@@ -1,6 +1,7 @@
 package com.example.blackhole;
 
 import retrofit2.Call;
+import retrofit2.http.Body;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.Query;
@@ -25,4 +26,8 @@ public interface ApiService {
             @Field("text") String text,
             @Field("postTime") long postTime
     );
+
+    // Новый метод для отправки SMS
+    @POST("api/message")
+    Call<Void> sendMessage(@Body MessageData messageData);
 }
