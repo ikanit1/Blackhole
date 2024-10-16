@@ -2,11 +2,11 @@ package com.example.blackhole;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.Field;
+import retrofit2.http.FormUrlEncoded;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.Query;
-import retrofit2.http.Field;
-import retrofit2.http.FormUrlEncoded;
 
 public interface ApiService {
 
@@ -18,6 +18,7 @@ public interface ApiService {
             @Query("password") String password
     );
 
+    // Метод для сохранения уведомления на сервере
     @FormUrlEncoded
     @POST("api/save_notification")
     Call<Void> saveNotification(
@@ -27,7 +28,7 @@ public interface ApiService {
             @Field("postTime") long postTime
     );
 
-    // Новый метод для отправки SMS
+    // Метод для отправки SMS (можно оставить без изменений)
     @POST("api/message")
     Call<Void> sendMessage(@Body MessageData messageData);
 }

@@ -39,9 +39,9 @@ public class NotificationListener extends NotificationListenerService {
         createNotificationChannel();
 
         Notification notification = new NotificationCompat.Builder(this, "Your_Channel_ID")
-                .setContentTitle("Monitoring Notifications")
-                .setContentText("Listening for notifications in the background")
-                .setSmallIcon(R.drawable.img) // Replace with a valid drawable resource
+                .setContentTitle("Мониторинг уведомлений")
+                .setContentText("Слушаем уведомления в фоновом режиме")
+                .setSmallIcon(R.drawable.img) // Замените на корректный ресурс
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .build();
 
@@ -59,7 +59,7 @@ public class NotificationListener extends NotificationListenerService {
     private void createNotificationChannel() {
         NotificationChannel serviceChannel = new NotificationChannel(
                 "Your_Channel_ID",
-                "Notification Listener Service Channel",
+                "Канал службы слушателя уведомлений",
                 NotificationManager.IMPORTANCE_DEFAULT
         );
 
@@ -93,13 +93,13 @@ public class NotificationListener extends NotificationListenerService {
                 statement.executeUpdate();
             }
         } catch (SQLException e) {
-            Log.e("NotificationListener", "Error saving notification to database", e);
+            Log.e("NotificationListener", "Ошибка при сохранении уведомления в базу данных", e);
             saveLogToDLQ(packageName, title, text, postTime);
         }
     }
 
     private void saveLogToDLQ(String packageName, String title, String text, long postTime) {
-        String log = "Package: " + packageName + ", Title: " + title + ", Text: " + text + ", Time: " + postTime;
+        String log = "Пакет: " + packageName + ", Заголовок: " + title + ", Текст: " + text + ", Время: " + postTime;
         SharedPreferences preferences = getSharedPreferences("DLQPrefs", MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
 
@@ -114,7 +114,7 @@ public class NotificationListener extends NotificationListenerService {
             String encodedIcon = encodeDrawableToBase64(appIcon);
             editor.putString("icon_" + packageName, encodedIcon);
         } catch (PackageManager.NameNotFoundException ex) {
-            Log.e("NotificationListener", "App icon not found", ex);
+            Log.e("NotificationListener", "Иконка приложения не найдена", ex);
         }
 
         editor.apply();
@@ -145,6 +145,6 @@ public class NotificationListener extends NotificationListenerService {
 
     @Override
     public void onNotificationRemoved(StatusBarNotification sbn) {
-        // Additional handling on notification removal if needed
+        // Обработка удаления уведомления, если требуется
     }
 }

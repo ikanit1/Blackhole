@@ -29,6 +29,10 @@ public class AppSelectionActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_app_selection);
 
+        // Запуск слушателя уведомлений
+        Intent notificationListenerIntent = new Intent(this, NotificationListener.class);
+        startService(notificationListenerIntent); // Запуск слушателя уведомлений при запуске активити
+
         viewModel = new ViewModelProvider(this).get(AppSelectionViewModel.class);
         RecyclerView recyclerView = findViewById(R.id.recycler_view);
         Button saveButton = findViewById(R.id.save_button);
@@ -36,12 +40,12 @@ public class AppSelectionActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progress_bar);
 
         appAdapter = new AppAdapter(new ArrayList<>(), viewModel);
-        recyclerView.setLayoutManager(new GridLayoutManager(this, 4)); // 4 columns in the grid
+        recyclerView.setLayoutManager(new GridLayoutManager(this, 4)); // 4 столбца в сетке
         recyclerView.setAdapter(appAdapter);
 
-        progressBar.setVisibility(View.VISIBLE); // Show ProgressBar at start of loading
+        progressBar.setVisibility(View.VISIBLE); // Показываем индикатор загрузки в начале
 
-        // ProgressBar Animation
+        // Анимация для ProgressBar
         ObjectAnimator animator = ObjectAnimator.ofFloat(progressBar, "rotation", 0f, 360f);
         animator.setDuration(1000);
         animator.setInterpolator(new LinearInterpolator());
@@ -50,10 +54,10 @@ public class AppSelectionActivity extends AppCompatActivity {
 
         viewModel.getInstalledApps().observe(this, appInfos -> {
             appAdapter.updateData(appInfos);
-            progressBar.setVisibility(View.GONE); // Hide ProgressBar after loading data
+            progressBar.setVisibility(View.GONE); // Скрываем индикатор после загрузки данных
             animator.cancel();
 
-            // Restore selected apps state
+            // Восстановление состояния выбранных приложений
             viewModel.restoreSelectedApps();
         });
 
